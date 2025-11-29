@@ -4,7 +4,7 @@ temp mail nim library temporarymail.com
 ```nim
 import asyncdispatch, temporarymail, json
 let data = waitFor generate_email()
-echo data["data"]["address"].getStr
+echo data["address"].getStr
 ```
 # Launch (your script)
 ```
