@@ -1,5 +1,5 @@
 # temporarymail
-temp mail nim library temporarymail.cc
+temp mail nim library temporarymail.com
 # Example
 ```nim
 import asyncdispatch, temporarymail, json
