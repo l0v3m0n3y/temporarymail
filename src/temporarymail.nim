@@ -1,44 +1,41 @@
 import asyncdispatch, httpclient, json, strutils
-
-var token: string = ""
-const api = "https://temporarymail.cc/"
-
-proc create_headers(): HttpHeaders =
-  result = newHttpHeaders({
+const api = "https://temporarymail.com/api"
+var secretKey=""
+var headers = newHttpHeaders({
     "Connection": "keep-alive",
-    "Host": "temporarymail.cc",
+    "user-agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.3",
+    "Host": "temporarymail.com",
     "Content-Type": "application/json",
-    "accept": "application/json, text/plain, */*"
-  })
-  if token != "":
-    result["Authorization"] = token
+    "accept": "application/json"
+})
 
-proc init_token(): Future[void] {.async.} =
+proc get_domains*(): Future[JsonNode] {.async.} =
   let client = newAsyncHttpClient()
+  client.headers = headers 
   try:
-    client.headers = create_headers()
-    let response = await client.post(api & "init", body ="")
-    let body = await response.body
-    token = parseJson(body)["data"]["token"].getStr
-  finally:
-    client.close()
-
-proc generate_email*(): Future[JsonNode] {.async.} =
-  await init_token()
-  let client = newAsyncHttpClient()
-  try:
-    client.headers = create_headers()
-    let response = await client.post(api & "api/generate", body ="")
+    let response = await client.get(api & "/?action=getDomains")
     let body = await response.body
     result = parseJson(body)
   finally:
     client.close()
 
+proc generate_email*(): Future[JsonNode] {.async.} =
+  let client = newAsyncHttpClient()
+  client.headers = headers 
+  try:
+    let response = await client.get(api & "/?action=requestEmailAccess&key=&value=random")
+    let body = await response.body
+    let json = parseJson(body)
+    secretKey= json["secretKey"].getStr()
+    result = json
+  finally:
+    client.close()
+
 proc get_messages*(): Future[JsonNode] {.async.} =
   let client = newAsyncHttpClient()
+  client.headers = headers 
   try:
-    client.headers = create_headers()
-    let response = await client.get(api & "api/emails")
+    let response = await client.get(api & "/?action=checkInbox&value=" & secretKey)
     let body = await response.body
     result = parseJson(body)
   finally:
